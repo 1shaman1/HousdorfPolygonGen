@@ -1,29 +1,32 @@
 #pragma once
 #include <vector>
 #include "Point.h"
+#include <random>
 
 class HausdorffPolygon {
 public:
     HausdorffPolygon() = default;
     explicit HausdorffPolygon(std::vector<Point> convex);
 
-    // доступ к состояниям
+	// РњРЅРѕРіРѕСѓРіРѕР»СЊРЅРёРє Рё РµРіРѕ РѕР±РѕР»РѕС‡РєР°
     const std::vector<Point>& convex() const;
-    const std::vector<Point>& deformed() const;
+    const std::vector<Point>& convexHull() const;
 
-    std::vector<Point>& deformedMutable();
+    std::vector<Point>& convexHullMutable();
 
-    // геометрия
+    // Р¦РµРЅС‚СЂРѕРёРґ
     const Point& initialCentroid() const;
     double area() const;
-    double convexArea() const;
+    double convexHullArea() const;
     int reflexCount() const;
 
-    // служебное
-    void resetToConvex();   // откат деформаций
+    double areaHullRatio() const;
 
 private:
     std::vector<Point> m_convex;
-    std::vector<Point> m_deformed;
-    Point m_initialCentroid;
+    std::vector<Point> m_convex_hull;
+    double m_area;
+    double m_convex_hull_area;    
+    Point m_initialCentroid;    
+    std::vector<Point> convexHull(std::vector<Point>);
 };

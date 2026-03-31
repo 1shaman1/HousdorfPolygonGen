@@ -12,23 +12,16 @@ enum class ReflexDirection {
 
 class PolygonGenerator {
 public:
-    ReflexDirection reflexDir = ReflexDirection::Bisector;
-    double depthCoeff = 0.3;
-
-    bool generateMultipleParallel(
-        double targetDiff,
-        int targetReflex,
-        int maxVertices,
-        int count,
-        const std::string& outDir,
-        int threads
-    );
+    void generateMultipleParallelRandom(int polygonCount,
+     const std::string& outDir, int threadsCount);
+    
 
 private:
     static constexpr double PI = 3.14159265358979323846;
 
     // === генерация ===
     std::vector<Point> generateConvexPolygon(int n, double radius = 100.0);
+    HausdorffPolygon createPolygon(std::mt19937& gen);
 
     // === деформации ===
     bool makeTargetReflex(
@@ -44,6 +37,7 @@ private:
     );
 
     // === геометрия ===
+    static std::vector<Point> generatePoints(int count, std::mt19937& gen);
     bool isSimple(const std::vector<Point>& poly);
 
     // === вывод ===
@@ -51,13 +45,12 @@ private:
     void saveSVG(const HausdorffPolygon& poly, const std::string& name);
 
     std::string createOutputFolder(
-        double diff,
-        int reflex,
-        int maxVertices,
-        ReflexDirection direction,
-        double depthCoefficient,
+        int vertexCount,
+        double araHullRatio,    
         const std::string& outDir
     );
+
+    std::random_device rd;
 
     std::mutex csvMutex;
 };
