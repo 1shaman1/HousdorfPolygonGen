@@ -12,16 +12,19 @@ enum class ReflexDirection {
 
 class PolygonGenerator {
 public:
-    void generateMultipleParallelRandom(int polygonCount,
+    void generateMultipleParallelRandom(int minVertexCount, int maxVertexCount, int polygonCount,
      const std::string& outDir, int threadsCount);
-    
+
+    /// Без записи на диск: пары выпуклая оболочка + невыпуклый многоугольник для gRPC.
+    std::vector<HausdorffPolygon> generatePolygonsForRpc(int minVertexCount, int maxVertexCount,
+                                                         int polygonCount);
 
 private:
     static constexpr double PI = 3.14159265358979323846;
 
     // === генерация ===
     std::vector<Point> generateConvexPolygon(int n, double radius = 100.0);
-    HausdorffPolygon createPolygon(std::mt19937& gen);
+    HausdorffPolygon createPolygon(std::mt19937& gen, int minVertexCount, int maxVertexCount);
 
     // === деформации ===
     bool makeTargetReflex(

@@ -1,5 +1,7 @@
 ﻿#include "HausdorffPolygonGen.h"
+#include "vertex_limits.h"
 #include <fstream>
+#include <stdexcept>
 #include <sstream>
 #include <iomanip>
 #include <filesystem>
@@ -188,9 +190,9 @@ std::vector<Point> PolygonGenerator::generateConvexPolygon(int n, double radius)
 
 /// @brief Создаёт случайный невыпуклый многоугольник
 /// @return 
-HausdorffPolygon PolygonGenerator::createPolygon(std::mt19937& gen) 
+HausdorffPolygon PolygonGenerator::createPolygon(std::mt19937& gen, int minVertexCount, int maxVertexCount) 
 {
-    std::uniform_int_distribution<> countDist(5, 30);
+    std::uniform_int_distribution<> countDist(minVertexCount, maxVertexCount);
     int n = countDist(gen);
     std::vector<Point> pointsSelected;
     while (true)
@@ -301,10 +303,18 @@ std::vector<Point> PolygonGenerator::generatePoints(int count, std::mt19937& gen
 /* ================== сохранение ================== */
 
 void PolygonGenerator::saveTXT(const HausdorffPolygon& poly, const std::string& name) {
-    std::ofstream out(name);
-    out << poly.convex().size() << "\n";
+    std::ofstream out_nonconvex(name + "_nonconvex.txt");
+    out_nonconvex << poly.convex().size() << "\n";
     for (auto& p : poly.convex())
-        out << p.x << " " << p.y << "\n";
+        out_nonconvex << p.x << " " << p.y << "\n";
+     out_nonconvex.close();
+
+    std::ofstream out_convex(name + "_convex.txt");
+    out_convex << poly.convexHull().size() << "\n";
+    for(auto& p : poly.convexHull())
+        out_convex << p.x << " " << p.y << "\n";    
+   
+    out_convex.close();
 }
 
 void PolygonGenerator::saveSVG(const HausdorffPolygon& poly, const std::string& name) {
@@ -323,6 +333,7 @@ void PolygonGenerator::saveSVG(const HausdorffPolygon& poly, const std::string& 
     out << "' fill='none' stroke='red' stroke-width='0.5'/>\n";
 
     out << "</svg>\n";
+    out.close();
 }
 
 
@@ -351,9 +362,26 @@ std::string PolygonGenerator::createOutputFolder(
 }
 
 
-void PolygonGenerator::generateMultipleParallelRandom(int polygonCount,
+std::vector<HausdorffPolygon> PolygonGenerator::generatePolygonsForRpc(
+    int minVertexCount, int maxVertexCount, int polygonCount) {
+    if (auto err = hausdorff_polygon_gen::validate_vertex_range(minVertexCount, maxVertexCount)) {
+        throw std::invalid_argument(*err);
+    }
+    std::vector<HausdorffPolygon> out;
+    out.reserve(static_cast<size_t>(polygonCount));
+    std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
+    for (int i = 0; i < polygonCount; ++i) {
+        out.push_back(createPolygon(rng, minVertexCount, maxVertexCount));
+    }
+    return out;
+}
+
+void PolygonGenerator::generateMultipleParallelRandom(int minVertexCount, int maxVertexCount, int polygonCount,
      const std::string& outDir, int threadsCount){
-    
+    if (auto err = hausdorff_polygon_gen::validate_vertex_range(minVertexCount, maxVertexCount)) {
+        throw std::invalid_argument(*err);
+    }
+
     const int maxIterPerThread = 50;
     std::atomic<int> generated(0);
     std::atomic<int> globalIndex(0);
@@ -372,12 +400,12 @@ void PolygonGenerator::generateMultipleParallelRandom(int polygonCount,
     auto worker = [&](int tid) {
         std::mt19937 rng((unsigned)std::time(nullptr) + tid);
         for (int iter = 0; iter < maxIterPerThread && generated < polygonCount; ++iter) {
-            auto polygon = createPolygon(rng);
+            auto polygon = createPolygon(rng, minVertexCount, maxVertexCount);
             std::string folder = createOutputFolder(polygon.convex().size(), polygon.areaHullRatio(), outDir);
             std::string baseName = folder;
             ++generated;
-            saveTXT(polygon, baseName + "/polygon.txt");
-            saveSVG(polygon, baseName + "/polygon.svg");
+            saveTXT(polygon, baseName + "/" + baseName + "_polygon");
+            saveSVG(polygon, baseName + "/" + baseName + "_polygon.svg");
 
             {
                 std::lock_guard<std::mutex> lock(csvMutex);
