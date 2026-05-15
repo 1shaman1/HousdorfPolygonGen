@@ -4,6 +4,7 @@
     "dependencies": [
       "grpc",
       "protobuf",
-      "libconfig"
+      "libconfig",
+      "spdlog"
     ]
   }

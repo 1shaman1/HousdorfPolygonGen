@@ -1,4 +1,5 @@
 #include "HausdorffPolygon.h"
+#include <algorithm>
 #include <cmath>
 
 static double cross(const Point& a, const Point& b, const Point& c) {

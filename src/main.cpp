@@ -1,9 +1,12 @@
+#include "config/config.h"
+#include "grpc/hausdorfgen_service.h"
+
+#include <spdlog/spdlog.h>
+
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
-#include <cstdlib>
-#include <ctime>
-#include <spdlog/spdlog.h>
 
 void printHelp() {
     std::cout << "Polygon Generator (Random)\n\n";

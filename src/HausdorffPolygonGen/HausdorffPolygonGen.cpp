@@ -1,5 +1,6 @@
 ﻿#include "HausdorffPolygonGen.h"
 #include "vertex_limits.h"
+#include <algorithm>
 #include <fstream>
 #include <stdexcept>
 #include <sstream>
@@ -11,6 +12,16 @@
 #include <ctime>
 
 namespace fs = std::filesystem;
+
+namespace {
+void local_time(std::tm* out, const std::time_t* t) {
+#if defined(_WIN32)
+    localtime_s(out, t);
+#else
+    localtime_r(t, out);
+#endif
+}
+}  // namespace
 
 const int startPolygonAngles = 50;
 
@@ -349,7 +360,7 @@ std::string PolygonGenerator::createOutputFolder(
 
     std::time_t t = std::time(nullptr);
     std::tm tm;
-    localtime_s(&tm, &t);
+    local_time(&tm, &t);
 
     std::ostringstream oss;
     oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
@@ -369,7 +380,7 @@ std::vector<HausdorffPolygon> PolygonGenerator::generatePolygonsForRpc(
     }
     std::vector<HausdorffPolygon> out;
     out.reserve(static_cast<size_t>(polygonCount));
-    std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
+    std::mt19937 rng(rd());
     for (int i = 0; i < polygonCount; ++i) {
         out.push_back(createPolygon(rng, minVertexCount, maxVertexCount));
     }
@@ -388,7 +399,7 @@ void PolygonGenerator::generateMultipleParallelRandom(int minVertexCount, int ma
     
     std::time_t t = std::time(nullptr);
     std::tm tm;
-    localtime_s(&tm, &t);
+    local_time(&tm, &t);
 
     std::ostringstream oss;
     oss << std::put_time(&tm, "%Y%m%d_%H%M%S");
