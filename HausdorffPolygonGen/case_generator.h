@@ -15,3 +15,4 @@ struct GeneratedCase {
 };
 
 GeneratedCase generateCase(const ExperimentConfig& cfg, const GenJob& job);
+GeneratedCase generatePocketCase(const ExperimentConfig& cfg, const GenJob& job);

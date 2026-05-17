@@ -69,6 +69,20 @@ std::vector<GenJob> planJobs(const ExperimentConfig& cfg) {
     if (jobLimit <= 0) return jobs;
 
     const GenTargets base = medians(cfg);
+
+    if (cfg.gen_mode == "random_hull") {
+        for (int i = 0; i < jobLimit; ++i) {
+            GenJob j;
+            j.targets = base;
+            j.replicate = i % std::max(1, cfg.replicate);
+            j.seed = static_cast<unsigned>(cfg.seed_base + i);
+            j.sweep_axis = "random";
+            j.sweep_level = 0.0;
+            j.case_id = "random_s" + std::to_string(cfg.seed_base) + "_n" + std::to_string(i);
+            jobs.push_back(j);
+        }
+        return jobs;
+    }
     std::vector<std::pair<std::string, std::vector<double>>> axes;
     for (const auto& kv : cfg.sweeps) {
         axes.emplace_back(kv.first, sweepLevels(kv.second));

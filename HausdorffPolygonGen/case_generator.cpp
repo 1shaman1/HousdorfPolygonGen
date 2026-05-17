@@ -7,6 +7,9 @@
 
 #include "geometry.h"
 
+#include "polygon_limits.h"
+#include "random_polygon_generator.h"
+
 #include "square_sampler.h"
 
 #include <algorithm>
@@ -49,7 +52,7 @@ bool convEqualsP0(const std::vector<Point>& p0, const std::vector<Point>& p) {
 
 
 
-GeneratedCase generateCase(const ExperimentConfig& cfg, const GenJob& job) {
+GeneratedCase generatePocketCase(const ExperimentConfig& cfg, const GenJob& job) {
 
     GeneratedCase result;
 
@@ -94,6 +97,8 @@ GeneratedCase generateCase(const ExperimentConfig& cfg, const GenJob& job) {
 
         if (!convEqualsP0(p0, p)) continue;
 
+        if (!pairWithinVertexLimit(p0, p)) continue;
+
 
 
         PolygonMetrics m = computeMetrics(p0, p, edgeInfo.pockets);
@@ -125,6 +130,13 @@ GeneratedCase generateCase(const ExperimentConfig& cfg, const GenJob& job) {
 
     return result;
 
+}
+
+GeneratedCase generateCase(const ExperimentConfig& cfg, const GenJob& job) {
+    if (cfg.gen_mode == "random_hull") {
+        return generateRandomHullCase(cfg, job);
+    }
+    return generatePocketCase(cfg, job);
 }
 
 

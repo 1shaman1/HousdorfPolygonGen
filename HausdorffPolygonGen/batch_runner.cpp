@@ -98,6 +98,12 @@ int runBatch(const BatchOptions& opts) {
     if (opts.seed_override >= 0) cfg.seed_base = opts.seed_override;
     if (opts.preview_every > 0) cfg.preview_every = opts.preview_every;
     if (opts.has_square_override) cfg.square = opts.square_override;
+    if (!opts.gen_mode_override.empty()) cfg.gen_mode = opts.gen_mode_override;
+    if (cfg.gen_mode != "pockets" && cfg.gen_mode != "random_hull") {
+        std::cerr << "Unknown gen_mode: " << cfg.gen_mode
+                  << " (use pockets or random_hull)\n";
+        return 1;
+    }
 
     int threads = cfg.threads;
     if (threads <= 0) {

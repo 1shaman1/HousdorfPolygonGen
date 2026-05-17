@@ -19,6 +19,7 @@ set(GEN_SOURCES
     HausdorffPolygonGen/sweep_planner.cpp
     HausdorffPolygonGen/polygon_io.cpp
     HausdorffPolygonGen/case_generator.cpp
+    HausdorffPolygonGen/random_polygon_generator.cpp
     HausdorffPolygonGen/batch_runner.cpp
     HausdorffPolygonGen/hausdorff_enricher.cpp
 )

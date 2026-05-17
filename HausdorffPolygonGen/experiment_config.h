@@ -13,7 +13,8 @@ struct SweepAxis {
 
 struct ExperimentConfig {
     SquareBounds square;
-    int points_per_hull = 64;
+    std::string gen_mode = "pockets";
+    int points_per_hull = 30;
     int dent_count = 2;
     int seed_base = 42;
     int count = 1000;

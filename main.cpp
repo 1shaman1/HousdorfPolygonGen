@@ -10,7 +10,11 @@ static void printHelp() {
     std::cout << "Usage:\n";
     std::cout << "  polygon_gen --experiment <file.json> [options]\n";
     std::cout << "  polygon_gen --count <N> --threads <T> [options]\n\n";
+    std::cout << "Generation modes (--gen-mode):\n";
+    std::cout << "  pockets      edge pockets on convex hull (default)\n";
+    std::cout << "  random_hull  random non-convex polygon + convex hull\n\n";
     std::cout << "Options:\n";
+    std::cout << "  --gen-mode <mode>       pockets | random_hull\n";
     std::cout << "  --experiment <path>     experiment.json (sweeps, square, dent_count)\n";
     std::cout << "  --count <N>             override number of cases\n";
     std::cout << "  --threads <T>           worker threads (default: from experiment or HW)\n";
@@ -20,8 +24,8 @@ static void printHelp() {
     std::cout << "  --preview-every <K>     write SVG every K-th case (0 = off)\n";
     std::cout << "  --enrich-hausdorff      grid+Shor и УЛЛ → metadata.csv (Python)\n";
     std::cout << "  --python <exe>          интерпретатор (default: python)\n";
-    std::cout << "  --hausdorff-raster <N>  шаги растеризации (default: 50)\n";
-    std::cout << "  --hausdorff-grid <N>    шаги сетки (default: 20)\n";
+    std::cout << "  --hausdorff-raster <N>  шаги растеризации (default: 80)\n";
+    std::cout << "  --hausdorff-grid <N>    шаги сетки (default: 30)\n";
     std::cout << "  --hausdorff-workers <W> потоки enrich (0 = auto)\n";
     std::cout << "  --help, -h\n";
 }
@@ -42,7 +46,9 @@ int main(int argc, char** argv) {
             printHelp();
             return 0;
         }
-        if (arg == "--experiment" && i + 1 < argc) {
+        if (arg == "--gen-mode" && i + 1 < argc) {
+            opts.gen_mode_override = argv[++i];
+        } else if (arg == "--experiment" && i + 1 < argc) {
             opts.experiment_path = argv[++i];
         } else if (arg == "--count" && i + 1 < argc) {
             opts.count_override = std::atoi(argv[++i]);
@@ -78,6 +84,14 @@ int main(int argc, char** argv) {
 
     if (opts.experiment_path.empty() && opts.count_override < 0) {
         opts.count_override = 100;
+    }
+
+    if (!opts.gen_mode_override.empty() &&
+        opts.gen_mode_override != "pockets" &&
+        opts.gen_mode_override != "random_hull") {
+        std::cerr << "Unknown --gen-mode: " << opts.gen_mode_override
+                  << " (use pockets or random_hull)\n";
+        return 1;
     }
 
     if (haveSquare) {

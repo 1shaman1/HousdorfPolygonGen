@@ -5,8 +5,8 @@
 struct HausdorffEnrichConfig {
     std::string python_exe = "python";
     std::string script_path;
-    int raster_steps = 50;
-    int grid_steps = 20;
+    int raster_steps = 80;
+    int grid_steps = 30;
     int workers = 0;
 };
 

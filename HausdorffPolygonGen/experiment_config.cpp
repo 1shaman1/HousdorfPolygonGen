@@ -1,4 +1,6 @@
 #include "experiment_config.h"
+#include "polygon_limits.h"
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <regex>
@@ -80,7 +82,7 @@ std::vector<double> sweepLevels(const SweepAxis& axis) {
 ExperimentConfig defaultExperimentConfig() {
     ExperimentConfig c;
     c.square = {0, 1000, 0, 1000};
-    c.points_per_hull = 64;
+    c.points_per_hull = 30;
     c.dent_count = 2;
     c.seed_base = 42;
     c.count = 1000;
@@ -114,7 +116,7 @@ bool loadExperimentConfig(const std::string& path, ExperimentConfig& out) {
         int v = 0;
         if (!parseInt((*it)[2].str(), v)) continue;
         const std::string k = (*it)[1].str();
-        if (k == "points_per_hull") out.points_per_hull = v;
+        if (k == "points_per_hull") out.points_per_hull = std::min(v, kMaxPolygonVertices);
         else if (k == "dent_count") out.dent_count = v;
         else if (k == "seed_base") out.seed_base = v;
         else if (k == "count") out.count = v;
@@ -125,10 +127,12 @@ bool loadExperimentConfig(const std::string& path, ExperimentConfig& out) {
         else if (k == "max_attempts") out.max_attempts = std::max(1, v);
     }
 
-    static const std::regex strField("\"(sweep_mode)\"\\s*:\\s*\"([^\"]+)\"");
+    static const std::regex strField("\"(sweep_mode|gen_mode)\"\\s*:\\s*\"([^\"]+)\"");
     std::sregex_iterator it2(text.begin(), text.end(), strField);
     for (; it2 != end; ++it2) {
-        if ((*it2)[1].str() == "sweep_mode") out.sweep_mode = (*it2)[2].str();
+        const std::string k = (*it2)[1].str();
+        if (k == "sweep_mode") out.sweep_mode = (*it2)[2].str();
+        else if (k == "gen_mode") out.gen_mode = (*it2)[2].str();
     }
 
     const std::string squareBody = extractObjectBody(text, "square");
@@ -157,6 +161,8 @@ bool loadExperimentConfig(const std::string& path, ExperimentConfig& out) {
     }
     if (out.sweeps.empty()) out.sweeps = defaultExperimentConfig().sweeps;
 
+    out.points_per_hull = std::min(out.points_per_hull, kMaxPolygonVertices);
+
     return true;
 }
 
@@ -166,6 +172,7 @@ bool saveExperimentConfig(const std::string& path, const ExperimentConfig& cfg) 
     out << "{\n";
     out << "  \"square\": { \"xmin\": " << cfg.square.xmin << ", \"xmax\": " << cfg.square.xmax
         << ", \"ymin\": " << cfg.square.ymin << ", \"ymax\": " << cfg.square.ymax << " },\n";
+    out << "  \"gen_mode\": \"" << cfg.gen_mode << "\",\n";
     out << "  \"points_per_hull\": " << cfg.points_per_hull << ",\n";
     out << "  \"min_hull_vertices\": " << cfg.min_hull_vertices << ",\n";
     out << "  \"dent_count\": " << cfg.dent_count << ",\n";
