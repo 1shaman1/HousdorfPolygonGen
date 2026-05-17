@@ -1,0 +1,18 @@
+{
+  "square": { "xmin": 0, "xmax": 1000, "ymin": 0, "ymax": 1000 },
+  "points_per_hull": 64,
+  "min_hull_vertices": 6,
+  "dent_count": 2,
+  "seed_base": 42,
+  "count": 0,
+  "replicate": 1,
+  "threads": 8,
+  "sweep_mode": "one_at_a_time",
+  "sweeps": {
+    "depth_rel":         { "min": 0.02, "max": 0.35, "step": 0.03 },
+    "bridge_width_rel":  { "min": 0.05, "max": 0.40, "step": 0.05 },
+    "pocket_width_rel":  { "min": 0.05, "max": 0.35, "step": 0.05 },
+    "area_ratio":        { "min": 1.02, "max": 1.40, "step": 0.04 },
+    "alpha_lebedev":     { "min": 0.10, "max": 1.20, "step": 0.10 }
+  }
+}
