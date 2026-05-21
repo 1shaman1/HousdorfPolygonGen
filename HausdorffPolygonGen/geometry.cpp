@@ -166,6 +166,50 @@ bool hullsApproximatelyEqual(
     return true;
 }
 
+void untanglePolygon2Opt(std::vector<Point>& p) {
+    const int n = static_cast<int>(p.size());
+    if (n < 4) return;
+
+    bool improved = true;
+    while (improved) {
+        improved = false;
+        for (int i = 0; i < n; ++i) {
+            const int i2 = (i + 1) % n;
+            for (int j = i + 2; j < n; ++j) {
+                const int j2 = (j + 1) % n;
+                if (i == j2) continue;
+                if (segmentsIntersect(
+                        p[static_cast<size_t>(i)],
+                        p[static_cast<size_t>(i2)],
+                        p[static_cast<size_t>(j)],
+                        p[static_cast<size_t>(j2)])) {
+                    std::reverse(p.begin() + i + 1, p.begin() + j + 1);
+                    improved = true;
+                }
+            }
+        }
+    }
+}
+
+bool pointInConvexPolygon(
+    const std::vector<Point>& poly,
+    const Point& p,
+    bool strictInterior)
+{
+    if (poly.size() < 3) return false;
+    for (size_t i = 0; i < poly.size(); ++i) {
+        const Point& a = poly[i];
+        const Point& b = poly[(i + 1) % poly.size()];
+        const double cr = cross(a, b, p);
+        if (strictInterior) {
+            if (cr <= 0) return false;
+        } else if (cr < 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 double maxIndentationToHull(const std::vector<Point>& p, const std::vector<Point>& hull) {
     const int hn = static_cast<int>(hull.size());
     double best = 0.0;

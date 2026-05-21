@@ -99,9 +99,10 @@ int runBatch(const BatchOptions& opts) {
     if (opts.preview_every > 0) cfg.preview_every = opts.preview_every;
     if (opts.has_square_override) cfg.square = opts.square_override;
     if (!opts.gen_mode_override.empty()) cfg.gen_mode = opts.gen_mode_override;
-    if (cfg.gen_mode != "pockets" && cfg.gen_mode != "random_hull") {
+    if (cfg.gen_mode != "pockets" && cfg.gen_mode != "random_hull" &&
+        cfg.gen_mode != "convex_blobs") {
         std::cerr << "Unknown gen_mode: " << cfg.gen_mode
-                  << " (use pockets or random_hull)\n";
+                  << " (use pockets, random_hull, or convex_blobs)\n";
         return 1;
     }
 
@@ -131,8 +132,14 @@ int runBatch(const BatchOptions& opts) {
             std::ofstream shard(runDir + "/shard_" + std::to_string(tid) + ".csv");
             shard << metadataHeader();
             for (size_t i = static_cast<size_t>(tid); i < jobs.size(); i += static_cast<size_t>(threads)) {
-                const GenJob& job = jobs[i];
-                GeneratedCase gc = generateCase(cfg, job);
+                GenJob job = jobs[i];
+                GeneratedCase gc;
+                constexpr int kMaxOuterRetries = 512;
+                for (int outer = 0; outer < kMaxOuterRetries; ++outer) {
+                    gc = generateCase(cfg, job);
+                    if (gc.ok) break;
+                    job.seed += 104729u;
+                }
                 if (!gc.ok) continue;
 
                 const std::string caseDir = runDir + "/" + job.case_id;

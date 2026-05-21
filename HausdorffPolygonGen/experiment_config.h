@@ -13,6 +13,9 @@ struct SweepAxis {
 
 struct ExperimentConfig {
     SquareBounds square;
+    /** Размер окна одной кляксы; для каждой кляксы окно заново случайно в square. */
+    SquareBounds blob_square;
+    bool has_blob_square = false;
     std::string gen_mode = "pockets";
     int points_per_hull = 30;
     int dent_count = 2;

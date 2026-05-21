@@ -302,8 +302,9 @@ bool applyEdgePockets(
 
     std::uniform_real_distribution<double> tauDist(0.08, 0.92);
     double depthScale = 1.0;
+    bool built = false;
 
-    for (int calib = 0; calib < 2; ++calib) {
+    for (int attempt = 0; attempt < 4 && !built; ++attempt) {
         poly = hull;
         records.clear();
         maxSpan = 1;
@@ -329,23 +330,16 @@ bool applyEdgePockets(
             records.push_back(rec);
         }
 
-        if (records.size() != starts.size()) continue;
+        if (records.size() != starts.size()) return false;
 
-        if (!geom::isSimple(poly)) {
+        if (geom::isSimple(poly)) {
+            built = true;
+        } else {
             depthScale *= 0.75;
-            continue;
         }
-
-        const PolygonMetrics m = computeMetrics(hull, poly, records);
-        const double err = m.area_ratio - targets.area_ratio;
-        if (std::abs(err) < 0.03 || calib == 1) break;
-        if (m.area_ratio < targets.area_ratio)
-            depthScale *= 1.12;
-        else
-            depthScale *= 0.88;
     }
 
-    if (records.empty() || !geom::isSimple(poly) || geom::isConvex(poly)) return false;
+    if (!built || records.empty() || geom::isConvex(poly)) return false;
 
     if (out) {
         out->ok = true;

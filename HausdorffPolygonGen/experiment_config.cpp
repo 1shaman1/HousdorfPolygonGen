@@ -79,6 +79,24 @@ std::vector<double> sweepLevels(const SweepAxis& axis) {
     return levels;
 }
 
+bool parseSquareBody(const std::string& body, SquareBounds& out) {
+    if (body.empty()) return false;
+    static const std::regex sq("\"(xmin|xmax|ymin|ymax)\"\\s*:\\s*([-+0-9.eE]+)");
+    bool any = false;
+    std::sregex_iterator sqIt(body.begin(), body.end(), sq);
+    for (; sqIt != std::sregex_iterator(); ++sqIt) {
+        double v = 0.0;
+        if (!parseDouble((*sqIt)[2].str(), v)) continue;
+        any = true;
+        const std::string k = (*sqIt)[1].str();
+        if (k == "xmin") out.xmin = v;
+        else if (k == "xmax") out.xmax = v;
+        else if (k == "ymin") out.ymin = v;
+        else if (k == "ymax") out.ymax = v;
+    }
+    return any;
+}
+
 ExperimentConfig defaultExperimentConfig() {
     ExperimentConfig c;
     c.square = {0, 1000, 0, 1000};
@@ -135,19 +153,13 @@ bool loadExperimentConfig(const std::string& path, ExperimentConfig& out) {
         else if (k == "gen_mode") out.gen_mode = (*it2)[2].str();
     }
 
-    const std::string squareBody = extractObjectBody(text, "square");
-    if (!squareBody.empty()) {
-        static const std::regex sq("\"(xmin|xmax|ymin|ymax)\"\\s*:\\s*([-+0-9.eE]+)");
-        std::sregex_iterator sqIt(squareBody.begin(), squareBody.end(), sq);
-        for (; sqIt != std::sregex_iterator(); ++sqIt) {
-            double v = 0.0;
-            if (!parseDouble((*sqIt)[2].str(), v)) continue;
-            const std::string k = (*sqIt)[1].str();
-            if (k == "xmin") out.square.xmin = v;
-            else if (k == "xmax") out.square.xmax = v;
-            else if (k == "ymin") out.square.ymin = v;
-            else if (k == "ymax") out.square.ymax = v;
-        }
+    SquareBounds sqParsed;
+    if (parseSquareBody(extractObjectBody(text, "square"), sqParsed)) {
+        out.square = sqParsed;
+    }
+    if (parseSquareBody(extractObjectBody(text, "blob_square"), sqParsed)) {
+        out.blob_square = sqParsed;
+        out.has_blob_square = true;
     }
 
     out.sweeps.clear();
@@ -172,6 +184,11 @@ bool saveExperimentConfig(const std::string& path, const ExperimentConfig& cfg) 
     out << "{\n";
     out << "  \"square\": { \"xmin\": " << cfg.square.xmin << ", \"xmax\": " << cfg.square.xmax
         << ", \"ymin\": " << cfg.square.ymin << ", \"ymax\": " << cfg.square.ymax << " },\n";
+    if (cfg.has_blob_square) {
+        out << "  \"blob_square\": { \"xmin\": " << cfg.blob_square.xmin
+            << ", \"xmax\": " << cfg.blob_square.xmax << ", \"ymin\": " << cfg.blob_square.ymin
+            << ", \"ymax\": " << cfg.blob_square.ymax << " },\n";
+    }
     out << "  \"gen_mode\": \"" << cfg.gen_mode << "\",\n";
     out << "  \"points_per_hull\": " << cfg.points_per_hull << ",\n";
     out << "  \"min_hull_vertices\": " << cfg.min_hull_vertices << ",\n";

@@ -4,6 +4,7 @@
 
 #include "alpha_lebedev.h"
 #include "edge_pocket_builder.h"
+#include "random_pocket_builder.h"
 
 #include "geometry.h"
 
@@ -48,6 +49,42 @@ bool convEqualsP0(const std::vector<Point>& p0, const std::vector<Point>& p) {
 
 
 
+bool findFixedSweepAxis(const ExperimentConfig& cfg, std::string& axisOut, double& valueOut) {
+    for (const auto& kv : cfg.sweeps) {
+        if (kv.second.min == kv.second.max) {
+            axisOut = kv.first;
+            valueOut = kv.second.min;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool usesFreeRandomGeometry(const std::string& sweepMode) {
+    return sweepMode == "fixed_free" || sweepMode == "one_at_a_time" || sweepMode == "target_bins";
+}
+
+bool resolveControlledMetric(
+    const ExperimentConfig& cfg,
+    const GenJob& job,
+    std::string& axisOut,
+    double& valueOut)
+{
+    if (cfg.sweep_mode == "fixed_free") {
+        return findFixedSweepAxis(cfg, axisOut, valueOut);
+    }
+    if (cfg.sweep_mode == "one_at_a_time" || cfg.sweep_mode == "target_bins") {
+        if (job.sweep_axis.empty() || job.sweep_axis == "none" || job.sweep_axis == "full" ||
+            job.sweep_axis == "lhs" || job.sweep_axis == "fixed_free" || job.sweep_axis == "random") {
+            return false;
+        }
+        axisOut = job.sweep_axis;
+        valueOut = job.sweep_level;
+        return true;
+    }
+    return false;
+}
+
 }  // namespace
 
 
@@ -58,6 +95,13 @@ GeneratedCase generatePocketCase(const ExperimentConfig& cfg, const GenJob& job)
 
     const int maxAttempts =
         (cfg.sweep_mode == "target_bins") ? 3 : std::max(1, cfg.max_attempts);
+
+    const bool freeGeom = usesFreeRandomGeometry(cfg.sweep_mode);
+    std::string fixedAxis;
+    double fixedValue = 0.0;
+    if (freeGeom && !resolveControlledMetric(cfg, job, fixedAxis, fixedValue)) {
+        return result;
+    }
 
 
 
@@ -75,23 +119,18 @@ GeneratedCase generatePocketCase(const ExperimentConfig& cfg, const GenJob& job)
 
         std::vector<Point> p = p0;
 
-        DentTargets dt;
-
-        dt.depth_rel = job.targets.depth_rel;
-
-        dt.bridge_width_rel = job.targets.bridge_width_rel;
-
-        dt.pocket_width_rel = job.targets.pocket_width_rel;
-
-        dt.area_ratio = job.targets.area_ratio;
-
-        dt.alpha_lebedev = job.targets.alpha_lebedev;
-
-
-
         EdgePocketBuildResult edgeInfo;
 
-        if (!applyEdgePockets(p, p0, dt, cfg.dent_count, attemptRng, &edgeInfo)) continue;
+        if (freeGeom) {
+            if (!applyFreeRandomPockets(p, p0, fixedAxis, fixedValue, attemptRng, &edgeInfo)) continue;
+        } else {
+            DentTargets dt;
+            dt.depth_rel = job.targets.depth_rel;
+            dt.bridge_width_rel = job.targets.bridge_width_rel;
+            dt.pocket_width_rel = job.targets.pocket_width_rel;
+            dt.alpha_lebedev = job.targets.alpha_lebedev;
+            if (!applyEdgePockets(p, p0, dt, cfg.dent_count, attemptRng, &edgeInfo)) continue;
+        }
 
         if (!geom::isSimple(p)) continue;
 
@@ -103,16 +142,6 @@ GeneratedCase generatePocketCase(const ExperimentConfig& cfg, const GenJob& job)
 
         PolygonMetrics m = computeMetrics(p0, p, edgeInfo.pockets);
         m.alpha_lebedev = computeAlphaLebedev(p);
-
-        if (cfg.sweep_mode == "target_bins") {
-
-            const double alphaErr = std::abs(m.alpha_proxy - job.targets.alpha_lebedev);
-
-            if (alphaErr > 0.15 && attempt + 1 < maxAttempts) continue;
-
-        }
-
-
 
         result.p0 = std::move(p0);
 
@@ -135,6 +164,9 @@ GeneratedCase generatePocketCase(const ExperimentConfig& cfg, const GenJob& job)
 GeneratedCase generateCase(const ExperimentConfig& cfg, const GenJob& job) {
     if (cfg.gen_mode == "random_hull") {
         return generateRandomHullCase(cfg, job);
+    }
+    if (cfg.gen_mode == "convex_blobs") {
+        return generateConvexBlobsCase(cfg, job);
     }
     return generatePocketCase(cfg, job);
 }

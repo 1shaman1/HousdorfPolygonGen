@@ -11,10 +11,11 @@ static void printHelp() {
     std::cout << "  polygon_gen --experiment <file.json> [options]\n";
     std::cout << "  polygon_gen --count <N> --threads <T> [options]\n\n";
     std::cout << "Generation modes (--gen-mode):\n";
-    std::cout << "  pockets      edge pockets on convex hull (default)\n";
-    std::cout << "  random_hull  random non-convex polygon + convex hull\n\n";
+    std::cout << "  pockets       edge pockets on convex hull (default)\n";
+    std::cout << "  random_hull   random non-convex polygon + convex hull\n";
+    std::cout << "  convex_blobs  union of small convex polygons + convex hull\n\n";
     std::cout << "Options:\n";
-    std::cout << "  --gen-mode <mode>       pockets | random_hull\n";
+    std::cout << "  --gen-mode <mode>       pockets | random_hull | convex_blobs\n";
     std::cout << "  --experiment <path>     experiment.json (sweeps, square, dent_count)\n";
     std::cout << "  --count <N>             override number of cases\n";
     std::cout << "  --threads <T>           worker threads (default: from experiment or HW)\n";
@@ -88,9 +89,10 @@ int main(int argc, char** argv) {
 
     if (!opts.gen_mode_override.empty() &&
         opts.gen_mode_override != "pockets" &&
-        opts.gen_mode_override != "random_hull") {
+        opts.gen_mode_override != "random_hull" &&
+        opts.gen_mode_override != "convex_blobs") {
         std::cerr << "Unknown --gen-mode: " << opts.gen_mode_override
-                  << " (use pockets or random_hull)\n";
+                  << " (use pockets, random_hull, or convex_blobs)\n";
         return 1;
     }
 

@@ -1,0 +1,22 @@
+{
+  "square": { "xmin": 0, "xmax": 1000, "ymin": 0, "ymax": 1000 },
+  "blob_square": { "xmin": 0, "xmax": 100, "ymin": 0, "ymax": 100 },
+  "gen_mode": "convex_blobs",
+  "points_per_hull": 30,
+  "min_hull_vertices": 4,
+  "dent_count": 2,
+  "seed_base": 42,
+  "sweep_mode": "one_at_a_time",
+  "count": 1000,
+  "replicate": 1,
+  "max_attempts": 48,
+  "threads": 8,
+  "preview_every": 0,
+  "sweeps": {
+    "alpha_lebedev": { "min": 0.1, "max": 1.2, "step": 0.1 },
+    "area_ratio": { "min": 1.02, "max": 1.4, "step": 0.04 },
+    "bridge_width_rel": { "min": 0.05, "max": 0.5, "step": 0.05 },
+    "depth_rel": { "min": 0.02, "max": 0.35, "step": 0.03 },
+    "pocket_width_rel": { "min": 0.03, "max": 0.4, "step": 0.04 }
+  }
+}

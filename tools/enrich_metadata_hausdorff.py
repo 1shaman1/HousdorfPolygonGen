@@ -242,8 +242,8 @@ def enrich_metadata(
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run-dir", type=Path, required=True)
-    ap.add_argument("--raster", type=int, default=50)
-    ap.add_argument("--grid", type=int, default=20)
+    ap.add_argument("--raster", type=int, default=80)
+    ap.add_argument("--grid", type=int, default=30)
     ap.add_argument("--workers", type=int, default=None)
     args = ap.parse_args()
     return enrich_metadata(

@@ -13,6 +13,7 @@ set(GEN_SOURCES
     HausdorffPolygonGen/square_sampler.cpp
     HausdorffPolygonGen/dent_builder.cpp
     HausdorffPolygonGen/edge_pocket_builder.cpp
+    HausdorffPolygonGen/random_pocket_builder.cpp
     HausdorffPolygonGen/metric_calculator.cpp
     HausdorffPolygonGen/alpha_lebedev.cpp
     HausdorffPolygonGen/experiment_config.cpp

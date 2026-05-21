@@ -24,4 +24,12 @@ bool hullsApproximatelyEqual(
     const std::vector<Point>& b,
     double relTol = 1e-4);
 
+/** Removes self-intersections by reversing subchains (2-opt style). */
+void untanglePolygon2Opt(std::vector<Point>& poly);
+
+bool pointInConvexPolygon(
+    const std::vector<Point>& poly,
+    const Point& p,
+    bool strictInterior = false);
+
 }  // namespace geom

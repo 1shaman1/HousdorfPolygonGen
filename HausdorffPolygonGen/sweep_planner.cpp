@@ -70,7 +70,7 @@ std::vector<GenJob> planJobs(const ExperimentConfig& cfg) {
 
     const GenTargets base = medians(cfg);
 
-    if (cfg.gen_mode == "random_hull") {
+    if (cfg.gen_mode == "random_hull" || cfg.gen_mode == "convex_blobs") {
         for (int i = 0; i < jobLimit; ++i) {
             GenJob j;
             j.targets = base;
@@ -142,7 +142,32 @@ std::vector<GenJob> planJobs(const ExperimentConfig& cfg) {
         return jobs;
     }
 
-    // one_at_a_time and target_bins share planner; bins use actual columns in CSV
+    if (cfg.sweep_mode == "fixed_free") {
+        std::string fixedAxis;
+        double fixedVal = 0.0;
+        for (const auto& kv : cfg.sweeps) {
+            if (kv.second.min == kv.second.max) {
+                fixedAxis = kv.first;
+                fixedVal = kv.second.min;
+                break;
+            }
+        }
+        if (fixedAxis.empty()) return jobs;
+        for (int i = 0; i < jobLimit; ++i) {
+            GenJob j;
+            j.targets = base;
+            setTarget(j.targets, fixedAxis, fixedVal);
+            j.replicate = i % std::max(1, cfg.replicate);
+            j.seed = static_cast<unsigned>(cfg.seed_base + i);
+            j.sweep_axis = "fixed_free";
+            j.sweep_level = 0.0;
+            j.case_id = makeCaseId(cfg.seed_base, "free", static_cast<double>(i), i);
+            jobs.push_back(j);
+        }
+        return jobs;
+    }
+
+    // one_at_a_time / target_bins: одна ось по сетке; геометрия — applyFreeRandomPockets (остальное случайно)
     size_t idx = 0;
     while (static_cast<int>(jobs.size()) < jobLimit) {
         for (const auto& ax : axes) {
