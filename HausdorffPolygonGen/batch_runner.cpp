@@ -16,6 +16,14 @@ namespace fs = std::filesystem;
 
 namespace {
 
+int seedBaseFromClock() {
+    const auto now = std::chrono::system_clock::now();
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        now.time_since_epoch())
+                        .count();
+    return static_cast<int>(ms & 0x7fffffff);
+}
+
 std::string timestampRunDir() {
     const auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
@@ -37,7 +45,7 @@ std::string metadataHeader() {
            "pocket_width_rel_target;pocket_width_rel_actual;pocket_width_rel_err;"
            "area_ratio_target;area_ratio_actual;area_ratio_err;"
            "alpha_lebedev_target;alpha_proxy_actual;alpha_proxy_err;"
-           "alpha_lebedev_full;reflex_count;sweep_axis;sweep_level;replicate\n";
+           "alpha_lebedev_full;angular_mass;reflex_count;sweep_axis;sweep_level;replicate\n";
 }
 
 std::string metadataRow(
@@ -60,6 +68,7 @@ std::string metadataRow(
         << job.targets.alpha_lebedev << ';' << gc.metrics.alpha_proxy << ';'
         << err(job.targets.alpha_lebedev, gc.metrics.alpha_proxy) << ';'
         << gc.metrics.alpha_lebedev << ';'
+        << gc.metrics.angular_mass << ';'
         << gc.metrics.reflex_count << ';'
         << job.sweep_axis << ';' << job.sweep_level << ';' << job.replicate << '\n';
     return row.str();
@@ -95,7 +104,12 @@ int runBatch(const BatchOptions& opts) {
     }
     if (opts.count_override > 0) cfg.count = opts.count_override;
     if (opts.threads_override > 0) cfg.threads = opts.threads_override;
-    if (opts.seed_override >= 0) cfg.seed_base = opts.seed_override;
+    if (opts.seed_override >= 0) {
+        cfg.seed_base = opts.seed_override;
+    } else if (opts.seed_from_time || cfg.seed_from_time) {
+        cfg.seed_base = seedBaseFromClock();
+        std::cout << "seed_base (from time): " << cfg.seed_base << '\n';
+    }
     if (opts.preview_every > 0) cfg.preview_every = opts.preview_every;
     if (opts.has_square_override) cfg.square = opts.square_override;
     if (!opts.gen_mode_override.empty()) cfg.gen_mode = opts.gen_mode_override;

@@ -7,7 +7,7 @@
 GeneratedCase generateRandomHullCase(const ExperimentConfig& cfg, const GenJob& job);
 
 /**
- * Several small convex blobs (scatter + Graham hull, 4–10 hull vertices) in the square;
+ * Several small convex blobs (uniform scatter in blob window + Andrew hull, 4–8 vertices);
  * their outer union boundary is stitched into one simple non-convex polygon,
  * with gap bridges to the nearest vertex of another blob when needed.
  */

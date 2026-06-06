@@ -5,18 +5,6 @@
 
 namespace {
 
-int reflexCount(const std::vector<Point>& poly) {
-    const int n = static_cast<int>(poly.size());
-    int cnt = 0;
-    for (int i = 0; i < n; ++i) {
-        const Point& a = poly[static_cast<size_t>((i - 1 + n) % n)];
-        const Point& b = poly[static_cast<size_t>(i)];
-        const Point& c = poly[static_cast<size_t>((i + 1) % n)];
-        if (geom::cross(a, b, c) < 0) ++cnt;
-    }
-    return cnt;
-}
-
 double scaleD(const std::vector<Point>& hull) {
     const double a = geom::polygonArea(hull);
     if (a > 1e-12) return std::sqrt(a);
@@ -60,7 +48,10 @@ PolygonMetrics computeMetrics(
     m.pocket_width_rel = (D > 1e-12) ? (maxPocketW / D) : 0.0;
 
     double alphaMax = 0.0;
+    double angularMass = 0.0;
+    int reflexCount = 0;
     const int pn = static_cast<int>(p.size());
+    constexpr double kPi = 3.14159265358979323846;
     for (int i = 0; i < pn; ++i) {
         const Point& a = p[static_cast<size_t>((i - 1 + pn) % pn)];
         const Point& b = p[static_cast<size_t>(i)];
@@ -76,11 +67,14 @@ PolygonMetrics computeMetrics(
         const double vy = (c.y - b.y) / lbc;
         const double dot = std::max(-1.0, std::min(1.0, ux * vx + uy * vy));
         const double angle = std::acos(dot);
-        constexpr double kPi = 3.14159265358979323846;
-        alphaMax = std::max(alphaMax, kPi - angle);
+        const double reflexExcess = kPi - angle;
+        alphaMax = std::max(alphaMax, reflexExcess);
+        angularMass += reflexExcess;
+        ++reflexCount;
     }
     m.alpha_proxy = alphaMax;
-    m.reflex_count = reflexCount(p);
+    m.angular_mass = angularMass;
+    m.reflex_count = reflexCount;
     return m;
 }
 

@@ -10,6 +10,8 @@ struct BatchOptions {
     int count_override = -1;
     int threads_override = -1;
     int seed_override = -1;
+    /** If true and --seed is not set, seed_base = milliseconds since epoch. */
+    bool seed_from_time = false;
     int preview_every = 0;
     bool has_square_override = false;
     SquareBounds square_override{};

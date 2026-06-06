@@ -17,6 +17,7 @@ struct PolygonMetrics {
     double bridge_width_rel = 0.0;
     double pocket_width_rel = 0.0;
     double alpha_proxy = 0.0;
+    double angular_mass = 0.0;
     double alpha_lebedev = 0.0;
     int reflex_count = 0;
     int n_hull = 0;

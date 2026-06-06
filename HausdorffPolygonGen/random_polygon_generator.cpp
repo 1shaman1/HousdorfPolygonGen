@@ -20,7 +20,7 @@ namespace {
 constexpr int kMinBlobVertices = 4;
 constexpr int kMaxBlobVertices = 8;
 constexpr int kMinBlobCount = 3;
-constexpr int kMaxBlobCount = 8;
+constexpr int kMaxBlobCount = 15;
 constexpr int kMaxGapBridges = 48;
 
 double signedArea(const std::vector<Point>& poly) {
@@ -39,54 +39,17 @@ void ensureCounterClockwise(std::vector<Point>& poly) {
     }
 }
 
-double grahamCross(const Point& o, const Point& a, const Point& b) {
-    return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-}
-
-std::vector<Point> grahamConvexHull(std::vector<Point> pts) {
-    if (pts.size() <= 1) return pts;
-
-    const auto pivotIt = std::min_element(
-        pts.begin(), pts.end(),
-        [](const Point& a, const Point& b) {
-            if (a.y != b.y) return a.y < b.y;
-            return a.x < b.x;
-        });
-    std::swap(pts.front(), *pivotIt);
-    const Point pivot = pts.front();
-
-    std::sort(pts.begin() + 1, pts.end(),
-        [&pivot](const Point& a, const Point& b) {
-            const double cr = grahamCross(pivot, a, b);
-            if (cr != 0.0) return cr > 0.0;
-            const double da = (a.x - pivot.x) * (a.x - pivot.x) + (a.y - pivot.y) * (a.y - pivot.y);
-            const double db = (b.x - pivot.x) * (b.x - pivot.x) + (b.y - pivot.y) * (b.y - pivot.y);
-            return da < db;
-        });
-
-    std::vector<Point> hull;
-    hull.reserve(pts.size());
-    for (const Point& p : pts) {
-        while (hull.size() >= 2 &&
-               grahamCross(hull[hull.size() - 2], hull.back(), p) <= 0.0) {
-            hull.pop_back();
-        }
-        hull.push_back(p);
-    }
-    return hull;
-}
-
 constexpr int kMinScatterPointsPerBlob = 10;
 constexpr int kScatterOversampleFactor = 3;
 constexpr int kMaxBlobHullAttempts = 24;
 
-std::vector<Point> sampleConvexBlobFromScatter(
-    const Point& center,
-    double radius,
+std::vector<Point> sampleConvexBlobFromWindow(
+    const SquareBounds& window,
     int hullVertexHint,
     std::mt19937& rng)
 {
-    std::uniform_real_distribution<double> u01(0.0, 1.0);
+    std::uniform_real_distribution<double> distX(window.xmin, window.xmax);
+    std::uniform_real_distribution<double> distY(window.ymin, window.ymax);
     const int scatterCount = std::max(
         kMinScatterPointsPerBlob,
         hullVertexHint * kScatterOversampleFactor);
@@ -95,13 +58,10 @@ std::vector<Point> sampleConvexBlobFromScatter(
         std::vector<Point> cloud;
         cloud.reserve(static_cast<size_t>(scatterCount));
         for (int i = 0; i < scatterCount; ++i) {
-            const double theta = u01(rng) * 2.0 * 3.14159265358979323846;
-            const double r = radius * std::sqrt(u01(rng));
-            cloud.push_back(
-                {center.x + r * std::cos(theta), center.y + r * std::sin(theta)});
+            cloud.push_back({distX(rng), distY(rng)});
         }
 
-        std::vector<Point> hull = grahamConvexHull(std::move(cloud));
+        std::vector<Point> hull = geom::convexHull(std::move(cloud));
         if (hull.size() < static_cast<size_t>(kMinBlobVertices)) {
             continue;
         }
@@ -420,7 +380,6 @@ bool tryGenerateConvexBlobs(
 
     std::uniform_int_distribution<int> blobCountDist(kMinBlobCount, kMaxBlobCount);
     std::uniform_int_distribution<int> vertexCountDist(kMinBlobVertices, kMaxBlobVertices);
-    std::uniform_real_distribution<double> u01(0.0, 1.0);
 
     const int blobCount = blobCountDist(rng);
 
@@ -428,34 +387,8 @@ bool tryGenerateConvexBlobs(
     blobs.reserve(static_cast<size_t>(blobCount));
     for (int i = 0; i < blobCount; ++i) {
         const SquareBounds window = placeBlobWindowRandomly(cfg, rng);
-        const double width = window.xmax - window.xmin;
-        const double height = window.ymax - window.ymin;
-        const double winScale = std::max(width, height);
-        const double margin = 0.12 * winScale;
-        const double baseRadius = (0.10 + 0.06 * u01(rng)) * winScale;
-
-        Point center{};
-        bool placed = false;
-        for (int attempt = 0; attempt < 48; ++attempt) {
-            if (width <= 2.0 * margin || height <= 2.0 * margin) {
-                break;
-            }
-            center = {
-                window.xmin + margin + u01(rng) * (width - 2.0 * margin),
-                window.ymin + margin + u01(rng) * (height - 2.0 * margin)};
-            placed = true;
-            break;
-        }
-        if (!placed) {
-            center = {
-                (window.xmin + window.xmax) * 0.5,
-                (window.ymin + window.ymax) * 0.5};
-        }
-
         const int vtx = vertexCountDist(rng);
-        const double radius = baseRadius * (0.75 + 0.5 * u01(rng));
-        std::vector<Point> blob =
-            sampleConvexBlobFromScatter(center, radius, vtx, rng);
+        std::vector<Point> blob = sampleConvexBlobFromWindow(window, vtx, rng);
         if (blob.size() < static_cast<size_t>(kMinBlobVertices)) {
             return false;
         }

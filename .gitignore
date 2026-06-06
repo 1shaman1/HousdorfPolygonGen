@@ -363,4 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 build
 experiments
-run_random_1000
+
+# Сгенерированные многоугольники (run_YYYYMMDD_HHMMSS, run_1000_*, и т.д.)
+run_*/

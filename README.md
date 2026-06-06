@@ -20,9 +20,10 @@
 | `depth_rel` | \(\max_{q\in P} \mathrm{dist}(q,\partial P_0) / D\), \(D=\sqrt{\mathrm{area}(P_0)}\) |
 | `bridge_width_rel` | хорда кармана на \(P_0\) / \(\mathrm{perimeter}(P_0)\) |
 | `pocket_width_rel` | ширина устья кармана / \(D\) |
-| `area_ratio` | \(\mathrm{area}(P_0)/\mathrm{area}(P)\) |
+| `area_ratio` | \(\mathrm{area}(P_0)/\mathrm{area}(P)\) — только **actual** (не рычаг генерации) |
 | `alpha_proxy_actual` | max по reflex-вершинам \((\pi - \angle ABC)\); для sweep / `target_bins` |
 | `alpha_lebedev_full` | полная α(M) Лебедева (2007): супремум углового конуса проекций; после генерации |
+| `angular_mass` | угловая масса невыпуклости: \(\sum_{v \in \text{reflex}} (\pi - \theta_v)\), где \(\theta_v\) — угол между рёбрами у вершины |
 
 ## Сборка
 
@@ -80,7 +81,7 @@ python benchmark_polygon_files.py --root ../../HousdorfPolygonGen/run_YYYYMMDD_H
 
 | `sweep_mode`      | Описание                                      |
 |-------------------|-----------------------------------------------|
-| `one_at_a_time`   | Одна ось меняется, остальные — медиана        |
+| `one_at_a_time`   | Одна ось по сетке `min…step…max`, остальные — uniform в диапазоне |
 | `full`            | Декартово произведение уровней                |
 | `lhs`             | Latin hypercube                               |
 | `target_bins`     | До 3 попыток под `alpha_lebedev`              |

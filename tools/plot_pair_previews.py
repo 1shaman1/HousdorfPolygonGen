@@ -99,6 +99,11 @@ def main() -> int:
     ap.add_argument("--run-dir", type=Path, required=True)
     ap.add_argument("--every", type=int, default=10, help="каждый N-й кейс (1 = все)")
     ap.add_argument("--out-dir", type=Path, default=None)
+    ap.add_argument(
+        "--in-case-dirs",
+        action="store_true",
+        help="писать {case_id}.svg/png в папку кейса (как polygon_gen --preview-every)",
+    )
     ap.add_argument("--format", choices=("png", "svg", "both"), default="png")
     ap.add_argument("--show-shifts", action="store_true", default=True)
     ap.add_argument("--no-shifts", action="store_true")
@@ -110,7 +115,7 @@ def main() -> int:
         print(f"not found: {meta_path}", file=__import__("sys").stderr)
         return 1
 
-    out_dir = (args.out_dir or (run_dir / f"previews_every_{args.every}")).resolve()
+    out_dir = None if args.in_case_dirs else (args.out_dir or (run_dir / f"previews_every_{args.every}")).resolve()
     show_shifts = args.show_shifts and not args.no_shifts
 
     with meta_path.open(newline="", encoding="utf-8") as f:
@@ -143,23 +148,25 @@ def main() -> int:
             if ux is not None and uy is not None:
                 ull_shift = (ux, uy)
 
+        dest = case_dir if args.in_case_dirs else out_dir
         if args.format in ("png", "both"):
             plot_pair(
                 cid,
                 p0,
                 p,
-                out_dir / f"{cid}.png",
+                dest / f"{cid}.png",
                 grid_shift=grid_shift,
                 ull_shift=ull_shift,
                 grid_h=_float(row, "grid_hausdorff"),
                 ull_h=_float(row, "ull_hausdorff"),
             )
         if args.format in ("svg", "both"):
-            save_svg(cid, p0, p, out_dir / f"{cid}.svg")
+            save_svg(cid, p0, p, dest / f"{cid}.svg")
 
         n_ok += 1
 
-    print(f"Wrote {n_ok} previews to {out_dir} (every {every}, from {len(rows)} cases)")
+    dest_msg = "case directories" if args.in_case_dirs else str(out_dir)
+    print(f"Wrote {n_ok} previews to {dest_msg} (every {every}, from {len(rows)} cases)")
     return 0 if n_ok > 0 else 2
 
 

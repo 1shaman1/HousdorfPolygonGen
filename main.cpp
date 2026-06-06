@@ -20,7 +20,8 @@ static void printHelp() {
     std::cout << "  --count <N>             override number of cases\n";
     std::cout << "  --threads <T>           worker threads (default: from experiment or HW)\n";
     std::cout << "  --out-dir <DIR>         output run_* folder (default: run_<timestamp>)\n";
-    std::cout << "  --seed <S>              override seed_base\n";
+    std::cout << "  --seed <S>              override seed_base (fixed, reproducible)\n";
+    std::cout << "  --seed-time             seed_base from current time (ms since epoch)\n";
     std::cout << "  --square xmin xmax ymin ymax\n";
     std::cout << "  --preview-every <K>     write SVG every K-th case (0 = off)\n";
     std::cout << "  --enrich-hausdorff      grid+Shor и УЛЛ → metadata.csv (Python)\n";
@@ -57,6 +58,8 @@ int main(int argc, char** argv) {
             opts.threads_override = std::atoi(argv[++i]);
         } else if (arg == "--out-dir" && i + 1 < argc) {
             opts.out_dir = argv[++i];
+        } else if (arg == "--seed-time") {
+            opts.seed_from_time = true;
         } else if (arg == "--seed" && i + 1 < argc) {
             opts.seed_override = std::atoi(argv[++i]);
         } else if (arg == "--preview-every" && i + 1 < argc) {

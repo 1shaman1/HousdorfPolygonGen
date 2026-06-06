@@ -145,6 +145,15 @@ bool loadExperimentConfig(const std::string& path, ExperimentConfig& out) {
         else if (k == "max_attempts") out.max_attempts = std::max(1, v);
     }
 
+    if (text.find("\"seed_from_time\"") != std::string::npos) {
+        static const std::regex seedTimeField(
+            "\"seed_from_time\"\\s*:\\s*(true|false)");
+        std::smatch m;
+        if (std::regex_search(text, m, seedTimeField)) {
+            out.seed_from_time = (m[1].str() == "true");
+        }
+    }
+
     static const std::regex strField("\"(sweep_mode|gen_mode)\"\\s*:\\s*\"([^\"]+)\"");
     std::sregex_iterator it2(text.begin(), text.end(), strField);
     for (; it2 != end; ++it2) {
@@ -199,6 +208,7 @@ bool saveExperimentConfig(const std::string& path, const ExperimentConfig& cfg) 
     out << "  \"replicate\": " << cfg.replicate << ",\n";
     out << "  \"max_attempts\": " << cfg.max_attempts << ",\n";
     out << "  \"threads\": " << cfg.threads << ",\n";
+    out << "  \"preview_every\": " << cfg.preview_every << ",\n";
     out << "  \"sweeps\": {\n";
     bool first = true;
     for (const auto& kv : cfg.sweeps) {

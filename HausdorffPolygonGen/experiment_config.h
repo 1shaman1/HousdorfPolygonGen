@@ -20,6 +20,8 @@ struct ExperimentConfig {
     int points_per_hull = 30;
     int dent_count = 2;
     int seed_base = 42;
+    /** When true, runBatch replaces seed_base with a value from the system clock. */
+    bool seed_from_time = false;
     int count = 1000;
     int replicate = 1;
     int threads = 8;
