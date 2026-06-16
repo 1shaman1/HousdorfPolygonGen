@@ -1,9 +1,8 @@
 {
   "square": { "xmin": 0, "xmax": 1000, "ymin": 0, "ymax": 1000 },
-  "blob_square": { "xmin": 0, "xmax": 1000, "ymin": 0, "ymax": 1000 },
-  "gen_mode": "convex_blobs",
+  "gen_mode": "random_hull",
   "points_per_hull": 30,
-  "min_hull_vertices": 4,
+  "min_hull_vertices": 6,
   "dent_count": 2,
   "sweep_mode": "one_at_a_time",
   "count": 1000,
